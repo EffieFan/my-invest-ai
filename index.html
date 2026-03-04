@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 投資偵探 - 行動工作站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        
+        .report-content { line-height: 1.8; color: #334155; }
+        .report-content h1 { font-size: 1.5rem; font-weight: 800; margin: 1.5rem 0 1rem; color: #1e40af; }
+        .report-content h2 { font-size: 1.25rem; font-weight: 700; margin: 1.25rem 0 0.75rem; color: #1e293b; border-left: 4px solid #4f46e5; padding-left: 0.75rem; background: #f1f5f9; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .report-content h3 { font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem; color: #475569; }
+        .report-content p { margin-bottom: 1rem; }
+        .report-content ul { margin-left: 1.5rem; margin-bottom: 1rem; list-style-type: disc; }
+        .report-content strong { color: #1e40af; font-weight: 700; }
+        
+        .chat-bubble-ai { border-top-left-radius: 0; }
+        .chat-bubble-user { border-top-right-radius: 0; }
+    </style>
+</head>
+<body class="pb-24">
+
+    <!-- 頂部導航 -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="bg-indigo-600 p-1.5 rounded-xl text-white">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+            </div>
+            <h1 class="font-bold text-slate-800 tracking-tight">AI 投資偵探</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="sync-status" class="text-[10px] text-slate-400 flex items-center gap-1.5">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> 雲端同步
+            </span>
+            <button id="config-btn" class="text-slate-500 hover:text-indigo-600">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto p-4 space-y-6">
+        <!-- 記憶卡片 -->
+        <section id="context-card" class="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl">
+            <div class="flex justify-between items-start mb-4">
+                <span id="learning-badge" class="bg-white/10 text-indigo-100 text-[10px] px-2 py-1 rounded-full border border-white/10 uppercase font-bold tracking-widest">載入中...</span>
+                <span class="text-xs text-indigo-300 font-mono" id="today-date"></span>
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-xs font-bold text-indigo-200 flex items-center gap-2">
+                    <i data-lucide="history" class="w-3.5 h-3.5"></i> 昨日傳承背景
+                </h2>
+                <p id="last-summary" class="text-sm text-indigo-50/80 leading-relaxed italic">正在讀取雲端記憶...</p>
+            </div>
+        </section>
+
+        <!-- 研究顯示區 -->
+        <section id="research-section" class="hidden space-y-4">
+            <div class="flex items-center justify-between px-1">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="text-amber-500 w-5 h-5"></i> 今日深度掃描
+                </h3>
+            </div>
+            <div id="research-display" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 report-content"></div>
+        </section>
+
+        <!-- 對話區 -->
+        <section id="qa-section" class="hidden space-y-4">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2 px-1">
+                <i data-lucide="message-circle" class="text-indigo-600 w-5 h-5"></i> 深度追問
+            </h3>
+            <div id="chat-messages" class="space-y-4"></div>
+        </section>
+
+        <!-- 啟動按鈕 -->
+        <div id="start-container" class="flex flex-col items-center justify-center py-20 space-y-6 text-center">
+            <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center animate-bounce">
+                <i data-lucide="radar" class="text-indigo-600 w-10 h-10"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-800">準備好開始今日偵查？</h2>
+            <button id="start-research-btn" class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg flex items-center gap-2">
+                啟動全球偵查系統 <i data-lucide="zap" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- 底部輸入欄 -->
+    <div id="bottom-bar" class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 hidden">
+        <div class="max-w-2xl mx-auto flex gap-2">
+            <input type="text" id="user-input" placeholder="對研究內容提問..." class="flex-grow bg-slate-100 border-transparent rounded-xl px-4 py-3 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+            <button id="send-btn" class="bg-indigo-600 text-white p-3 rounded-xl"><i data-lucide="send" class="w-5 h-5"></i></button>
+            <button id="finish-btn" class="bg-slate-800 text-white p-3 rounded-xl"><i data-lucide="save" class="w-5 h-5"></i></button>
+        </div>
+    </div>
+
+    <!-- 設定視窗 -->
+    <div id="config-modal" class="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-8 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg">偵探核心設定</h3>
+                <button id="close-config" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="space-y-4">
+                <label class="block text-sm font-bold text-slate-600">學習進度 (月份)</label>
+                <input type="number" id="cfg-month" class="w-full bg-slate-50 rounded-xl p-3 border-none outline-none">
+                <label class="block text-sm font-bold text-slate-600">追蹤偏好</label>
+                <input type="text" id="cfg-prefs" class="w-full bg-slate-50 rounded-xl p-3 border-none outline-none">
+                <button id="save-cfg-btn" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg">儲存並同步雲端</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'invest-pro-mobile';
+        const apiKey = ""; 
+
+        let user = null;
+        let config = { learning_month: 3, preferences: "美股大盤, 半導體, 加密貨幣, 黃金", last_summary: "尚未開始研究" };
+        let dailyResearchText = "";
+        let qaHistory = [];
+
+        const safeCreateIcons = () => { if (typeof lucide !== 'undefined') lucide.createIcons(); else setTimeout(safeCreateIcons, 100); };
+
+        const init = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+            else await signInAnonymously(auth);
+            safeCreateIcons();
+            document.getElementById('today-date').textContent = new Date().toLocaleDateString();
+        };
+
+        onAuthStateChanged(auth, async (u) => {
+            if (u) {
+                user = u;
+                const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'invest_config');
+                const docSnap = await getDoc(configRef);
+                if (docSnap.exists()) config = docSnap.data();
+                else await setDoc(configRef, config);
+                updateUI();
+            }
+        });
+
+        const updateUI = () => {
+            document.getElementById('learning-badge').textContent = `第 ${config.learning_month} 個月進度`;
+            document.getElementById('last-summary').textContent = config.last_summary;
+            document.getElementById('cfg-month').value = config.learning_month;
+            document.getElementById('cfg-prefs').value = config.preferences;
+        };
+
+        async function askAI(prompt, system) {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: system }] }, tools: [{ "google_search": {} }] })
+            });
+            const data = await resp.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "連線逾時...";
+        }
+
+        const simpleMD = (t) => t.replace(/^# (.*$)/gim, '<h1>$1</h1>').replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/\n/gim, '<br>');
+
+        document.getElementById('start-research-btn').onclick = async () => {
+            const btn = document.getElementById('start-research-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin"></i> 搜尋中...`;
+            safeCreateIcons();
+
+            const p = `執行今日研究。進度：${config.learning_month}月。關注：${config.preferences}。背景：${config.last_summary}。請分析強勢產業與新機會。`;
+            dailyResearchText = await askAI(p, "你是專業投資偵探，請用繁體中文回覆清晰的 Markdown 報告。");
+            
+            document.getElementById('start-container').classList.add('hidden');
+            document.getElementById('research-section').classList.remove('hidden');
+            document.getElementById('qa-section').classList.remove('hidden');
+            document.getElementById('bottom-bar').classList.remove('hidden');
+            document.getElementById('research-display').innerHTML = simpleMD(dailyResearchText);
+        };
+
+        document.getElementById('send-btn').onclick = async () => {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chat = document.getElementById('chat-messages');
+            const uDiv = document.createElement('div');
+            uDiv.className = "bg-indigo-600 text-white p-4 rounded-2xl chat-bubble-user ml-auto max-w-[85%] text-sm mb-4";
+            uDiv.innerText = text;
+            chat.appendChild(uDiv);
+            input.value = "";
+
+            const aiResp = await askAI(`參考研究：${dailyResearchText}\n提問：${text}`, "請給出深度解答。");
+            const aDiv = document.createElement('div');
+            aDiv.className = "bg-white border p-4 rounded-2xl chat-bubble-ai max-w-[85%] text-sm text-slate-700 shadow-sm mb-4";
+            aDiv.innerHTML = simpleMD(aiResp);
+            chat.appendChild(aDiv);
+            qaHistory.push({ q: text, a: aiResp });
+            window.scrollTo(0, document.body.scrollHeight);
+        };
+
+        document.getElementById('finish-btn').onclick = async () => {
+            const sum = await askAI(`總結今日重點作明日傳承：\n${dailyResearchText + JSON.stringify(qaHistory)}`, "請用60字內總結。");
+            config.last_summary = sum.trim();
+            await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'invest_config'), config);
+            alert("✅ 記憶已傳承至雲端！");
+            location.reload();
+        };
+
+        document.getElementById('config-btn').onclick = () => document.getElementById('config-modal').classList.remove('hidden');
+        document.getElementById('close-config').onclick = () => document.getElementById('config-modal').classList.add('hidden');
+        document.getElementById('save-cfg-btn').onclick = async () => {
+            config.learning_month = parseInt(document.getElementById('cfg-month').value);
+            config.preferences = document.getElementById('cfg-prefs').value;
+            await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'invest_config'), config);
+            document.getElementById('config-modal').classList.add('hidden');
+            updateUI();
+        };
+
+        init();
+    </script>
+</body>
+</html>
